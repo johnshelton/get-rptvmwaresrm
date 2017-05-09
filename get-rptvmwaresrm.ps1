@@ -47,7 +47,8 @@ IF($PathExists -eq $False)
 #
 $Result = @()
 ForEach($VCenterServer in $VCenterServers){
-  Connect-VIServer -Server $VCenterServer
+  $SRMCred = Get-Credential -Message "Please enter the credentials to connect to $VCenterServer SRM"
+  Connect-VIServer -Server $VCenterServer -Credential $SRMCred
   $srm = Connect-SrmServer
   $srmApi = $srm.ExtensionData
   $protectionGroups = $srmApi.Protection.ListProtectionGroups()
@@ -63,7 +64,8 @@ ForEach($VCenterServer in $VCenterServers){
     $protectedVms | % { $_.Vm.UpdateViewData() }
     # After the data is populated, use it to generate a report
     $protectedVms | %{
-        $output = "" | select VmName, PgName, State, NeedsConfig
+        $output = "" | select VCenterServer, VmName, PgName, State, NeedsConfig
+        $output.VCenterServer = $VCenterServer
         $output.VmName = $_.Vm.Name
         $output.PgName = $protectionGroupInfo.Name
         $output.NeedsConfig = $_.NeedsConfiguration
